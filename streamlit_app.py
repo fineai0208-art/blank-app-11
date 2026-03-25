@@ -6,11 +6,12 @@ import plotly.express as px
 st.set_page_config(page_title="식단 영양 시뮬레이터", layout="wide")
 st.title("🥩 실시간 식단 영양 대시보드")
 
-# 2. 보편적인 1회 제공량 기준 데이터베이스 업데이트
-# 에그 맥머핀 단품 기준: 약 300kcal, 탄수화물 28g, 단백질 17g, 지방 13g
+# 2. 보편적인 1회 제공량 기준 데이터베이스 (최종본)
 food_db = {
     "에그 맥머핀(1개)": {"kcal": 303, "carbs": 28, "protein": 17, "fat": 13},
     "해쉬 브라운(1개)": {"kcal": 159, "carbs": 15, "protein": 1, "fat": 10},
+    "일반 콜라(355ml)": {"kcal": 150, "carbs": 38, "protein": 0, "fat": 0},
+    "제로 콜라(355ml)": {"kcal": 0, "carbs": 0, "protein": 0, "fat": 0},
     "소고기(등심) 200g": {"kcal": 500, "carbs": 0, "protein": 52, "fat": 30},
     "닭가슴살 100g": {"kcal": 165, "carbs": 0, "protein": 31, "fat": 3.6},
     "달걀(2개)": {"kcal": 155, "carbs": 1.1, "protein": 13, "fat": 11},
@@ -61,22 +62,28 @@ if selected_foods:
     m3.metric("단백질", f"{total_stats['protein']:.1f} g")
     m4.metric("지방", f"{total_stats['fat']:.1f} g")
 
-    # 6. 알림 메시지
+    # 6. 알림 메시지 로직
     if total_stats["carbs"] > target_carbs:
         st.error(f"⚠️ 탄수화물 섭취량이 제한치({target_carbs}g)를 넘었습니다!")
     elif total_stats["carbs"] > target_carbs * 0.8:
-        st.warning("💡 탄수화물이 거의 찼습니다. 남은 식사는 저탄수 위주로 추천합니다.")
+        st.warning("💡 탄수화물이 거의 찼습니다. 남은 식사는 육류나 채소 위주를 권장합니다.")
     else:
         st.success("✅ 탄수화물 관리가 아주 잘 되고 있습니다!")
 
-    # 7. 차트
+    # 7. 차트 시각화
     chart_df = pd.DataFrame({
         "영양소": ["탄수화물", "단백질", "지방"],
         "섭취량(g)": [total_stats["carbs"], total_stats["protein"], total_stats["fat"]]
     })
     
-    fig = px.pie(chart_df, values="섭취량(g)", names="영양소", hole=0.4, title="오늘의 영양 균형")
-    st.plotly_chart(fig, use_container_width=True)
+    # 0g인 영양소는 차트에서 제외하여 깔끔하게 표시
+    chart_df = chart_df[chart_df["섭취량(g)"] > 0]
+    
+    if not chart_df.empty:
+        fig = px.pie(chart_df, values="섭취량(g)", names="영양소", hole=0.4, title="오늘의 영양 균형")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.write("섭취한 영양소가 없습니다.")
 
 else:
     st.info("음식을 선택해 주세요. 선택 즉시 데이터가 업데이트됩니다.")
