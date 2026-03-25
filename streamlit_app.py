@@ -6,8 +6,14 @@ import plotly.express as px
 st.set_page_config(page_title="식단 영양 시뮬레이터", layout="wide")
 st.title("🥩 실시간 식단 영양 대시보드")
 
-# 2. 보편적인 1회 제공량 기준 데이터베이스 (최종본)
+# 2. 보편적인 1회 제공량 기준 데이터베이스 (최종 업데이트)
 food_db = {
+    "쌀국수(1인분)": {"kcal": 500, "carbs": 95, "protein": 25, "fat": 2},
+    "요거트(1팩/100g)": {"kcal": 90, "carbs": 12, "protein": 3.5, "fat": 3},
+    "삼각김밥(1개)": {"kcal": 180, "carbs": 35, "protein": 4, "fat": 2.5},
+    "아이스 바닐라 라떼(1잔)": {"kcal": 220, "carbs": 30, "protein": 7, "fat": 8},
+    "감자튀김(M)": {"kcal": 330, "carbs": 40, "protein": 3, "fat": 17},
+    "피자(1조각)": {"kcal": 280, "carbs": 30, "protein": 12, "fat": 12},
     "에그 맥머핀(1개)": {"kcal": 303, "carbs": 28, "protein": 17, "fat": 13},
     "해쉬 브라운(1개)": {"kcal": 159, "carbs": 15, "protein": 1, "fat": 10},
     "일반 콜라(355ml)": {"kcal": 150, "carbs": 38, "protein": 0, "fat": 0},
@@ -38,9 +44,10 @@ selected_foods = st.multiselect("음식을 선택하면 즉시 계산됩니다",
 total_stats = {"kcal": 0, "carbs": 0, "protein": 0, "fat": 0}
 
 if selected_foods:
-    cols = st.columns(len(selected_foods))
+    # 화면을 깔끔하게 유지하기 위해 컬럼을 동적으로 생성
+    cols = st.columns(min(len(selected_foods), 3))
     for i, food in enumerate(selected_foods):
-        with cols[i]:
+        with cols[i % 3]:
             count = st.number_input(f"{food} (수량)", min_value=0.0, value=1.0, step=0.5, key=f"input_{food}")
             
             total_stats["kcal"] += food_db[food]["kcal"] * count
@@ -76,7 +83,6 @@ if selected_foods:
         "섭취량(g)": [total_stats["carbs"], total_stats["protein"], total_stats["fat"]]
     })
     
-    # 0g인 영양소는 차트에서 제외하여 깔끔하게 표시
     chart_df = chart_df[chart_df["섭취량(g)"] > 0]
     
     if not chart_df.empty:
